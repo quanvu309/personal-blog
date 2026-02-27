@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { getAllPosts } from '@/lib/posts';
+import { getDb } from '@/lib/db';
 import { generateSlug } from '@/lib/markdown';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-import type { CreatePostRequest, ApiResponse, Post } from '@/types';
-
-const postsDirectory = path.join(process.cwd(), 'content/posts');
+import type { CreatePostRequest, Post } from '@/types';
 
 // GET /api/posts - List all posts (admin only)
 export async function GET() {
@@ -22,9 +17,19 @@ export async function GET() {
   }
 
   try {
-    const posts = getAllPosts();
+    const sql = getDb();
+    const posts = await sql`
+      SELECT
+        id, title, slug, content, date, status,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM posts
+      ORDER BY created_at DESC
+    `;
+
     return NextResponse.json({ success: true, data: posts });
   } catch (error) {
+    console.error('Error fetching posts:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch posts' },
       { status: 500 }
@@ -71,39 +76,18 @@ export async function POST(request: NextRequest) {
     // Generate post data
     const id = uuidv4();
     const slug = generateSlug(body.title);
-    const now = new Date().toISOString();
+    const now = new Date();
 
-    const post: Post = {
-      id,
-      title: body.title,
-      slug,
-      content: body.content,
-      date: now,
-      status: body.status,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    // Create frontmatter
-    const frontmatter = {
-      title: post.title,
-      slug: post.slug,
-      date: post.date,
-      status: post.status,
-      createdAt: post.createdAt,
-      updatedAt: post.updatedAt,
-    };
-
-    const fileContent = matter.stringify(post.content, frontmatter);
-
-    // Ensure directory exists
-    if (!fs.existsSync(postsDirectory)) {
-      fs.mkdirSync(postsDirectory, { recursive: true });
-    }
-
-    // Write file
-    const filePath = path.join(postsDirectory, `${id}.md`);
-    fs.writeFileSync(filePath, fileContent);
+    // Insert into database
+    const sql = getDb();
+    const [post] = await sql`
+      INSERT INTO posts (id, title, slug, content, date, status, created_at, updated_at)
+      VALUES (${id}, ${body.title}, ${slug}, ${body.content}, ${now.toISOString()}, ${body.status}, ${now.toISOString()}, ${now.toISOString()})
+      RETURNING
+        id, title, slug, content, date, status,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+    `;
 
     return NextResponse.json({ success: true, data: post }, { status: 201 });
   } catch (error) {

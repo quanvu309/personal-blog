@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { getAllPublishedPosts } from '@/lib/posts';
 import { formatDate } from '@/lib/markdown';
 
-export default function HomePage() {
-  const posts = getAllPublishedPosts();
+export default async function HomePage() {
+  const posts = await getAllPublishedPosts();
 
   return (
     <div>

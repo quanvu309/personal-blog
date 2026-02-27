@@ -3,7 +3,7 @@ import { getAllPublishedPosts, getPostBySlug } from '@/lib/posts';
 import { markdownToHtml, formatDate } from '@/lib/markdown';
 
 export async function generateStaticParams() {
-  const posts = getAllPublishedPosts();
+  const posts = await getAllPublishedPosts();
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -15,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return {
@@ -31,7 +31,7 @@ export async function generateMetadata({
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   // Return 404 if post not found or is a draft
   if (!post || post.status !== 'published') {

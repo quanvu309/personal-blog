@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
     "@octokit/rest": "^21.0.2",
     "autoprefixer": "^10.4.27",
     "gray-matter": "^4.0.3",
