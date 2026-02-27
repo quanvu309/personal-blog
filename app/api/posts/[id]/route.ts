@@ -12,7 +12,7 @@ const postsDirectory = path.join(process.cwd(), 'content/posts');
 // GET /api/posts/[id] - Get single post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
 
@@ -24,7 +24,8 @@ export async function GET(
   }
 
   try {
-    const post = getPostById(params.id);
+    const { id } = await params;
+    const post = getPostById(id);
 
     if (!post) {
       return NextResponse.json(
@@ -45,7 +46,7 @@ export async function GET(
 // PATCH /api/posts/[id] - Update post
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
 
@@ -57,7 +58,8 @@ export async function PATCH(
   }
 
   try {
-    const post = getPostById(params.id);
+    const { id } = await params;
+    const post = getPostById(id);
 
     if (!post) {
       return NextResponse.json(
@@ -119,7 +121,7 @@ export async function PATCH(
     const fileContent = matter.stringify(updatedPost.content, frontmatter);
 
     // Write file
-    const filePath = path.join(postsDirectory, `${params.id}.md`);
+    const filePath = path.join(postsDirectory, `${id}.md`);
     fs.writeFileSync(filePath, fileContent);
 
     return NextResponse.json({ success: true, data: updatedPost });
@@ -135,7 +137,7 @@ export async function PATCH(
 // DELETE /api/posts/[id] - Delete post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
 
@@ -147,7 +149,8 @@ export async function DELETE(
   }
 
   try {
-    const filePath = path.join(postsDirectory, `${params.id}.md`);
+    const { id } = await params;
+    const filePath = path.join(postsDirectory, `${id}.md`);
 
     if (!fs.existsSync(filePath)) {
       return NextResponse.json(
