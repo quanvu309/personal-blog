@@ -12,11 +12,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const password = credentials?.password as string;
         const adminPassword = process.env.ADMIN_PASSWORD;
 
+        // Debug logging for production
+        console.log('Auth attempt:', {
+          hasPassword: !!password,
+          hasAdminPassword: !!adminPassword,
+          passwordsMatch: password === adminPassword,
+        });
+
         if (!adminPassword) {
+          console.error('ADMIN_PASSWORD environment variable is not set');
           throw new Error('ADMIN_PASSWORD environment variable is not set');
         }
 
         if (password === adminPassword) {
+          console.log('Authentication successful');
           return {
             id: 'admin',
             email: 'admin@camthoi.com',
@@ -24,6 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           };
         }
 
+        console.log('Authentication failed: password mismatch');
         return null;
       },
     }),
