@@ -46,7 +46,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
       WHERE slug = ${slug}
     `;
 
-    return post || null;
+    return (post as Post) || null;
   } catch (error) {
     console.error('Error fetching post by slug:', error);
     return null;
